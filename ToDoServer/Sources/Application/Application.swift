@@ -18,7 +18,6 @@ public class App {
     let router = Router()
     let cloudEnv = CloudEnv()
 
-    private var todoStore: [ToDo] = []
     private var nextId: Int = 0
     private let workerQueue = DispatchQueue(label: "worker")
 
@@ -112,20 +111,26 @@ public class App {
     /// Updates all fields for a single to-do item.
     ///
     func updateHandler(id: Int, new: ToDo, completion: @escaping (ToDo?, RequestError?) -> Void) {
-        guard let index = todoStore.index(where: { $0.id == id }) else {
-            return completion(nil, .notFound)
-        }
+        ToDo.find(id: id) { (preExistingToDo, error) in
+            if error != nil {
+                return completion(nil, .notFound)
+            }
 
-        var current = todoStore[index]
-        current.user = new.user ?? current.user
-        current.order = new.order ?? current.order
-        current.title = new.title ?? current.title
-        current.completed = new.completed ?? current.completed
+            guard var oldToDo = preExistingToDo else {
+                return completion(nil, .notFound)
+            }
 
-        execute {
-            todoStore[index] = current
+            guard let id = oldToDo.id else {
+                return completion(nil, .internalServerError)
+            }
+
+            oldToDo.user = new.user ?? oldToDo.user
+            oldToDo.order = new.order ?? oldToDo.order
+            oldToDo.title = new.title ?? oldToDo.title
+            oldToDo.completed = new.completed ?? oldToDo.completed
+
+            oldToDo.update(id: id, completion)
         }
-        completion(current, nil)
     }
 }
 
