@@ -82,46 +82,31 @@ public class App {
         todo.id = nextId
         todo.url = "http://localhost:8080/\(nextId)"
         nextId += 1
-        execute {
-            todoStore.append(todo)
-        }
-        completion(todo, nil)
+        todo.save(completion)
     }
 
     /// Careful! The DELETE request deletes all items.
     ///
     func deleteAllHandler(completion: @escaping (RequestError?) -> Void) {
-        execute {
-            todoStore = []
-        }
-        completion(nil)
+        ToDo.deleteAll(completion)
     }
 
     /// Deletes a single to-do item by ID.
     ///
     func deleteOneHandler(id: Int, completion: @escaping (RequestError?) -> Void) {
-        guard let index = todoStore.index(where: { $0.id == id }) else {
-            return completion(.notFound)
-        }
-        execute {
-            todoStore.remove(at: index)
-        }
-        completion(nil)
+        ToDo.delete(id: id, completion)
     }
 
     /// Gets all to-do list items.
     ///
     func getAllHandler(completion: @escaping ([ToDo]?, RequestError?) -> Void) {
-        completion(todoStore, nil)
+        ToDo.findAll(completion)
     }
 
     /// Gets a single to-do item by ID.
     ///
     func getOneHandler(id: Int, completion: @escaping (ToDo?, RequestError?) -> Void) {
-        guard let todo = todoStore.first(where: { $0.id == id }) else {
-            return completion(nil, .notFound)
-        }
-        completion(todo, nil)
+        ToDo.find(id: id, completion)
     }
 
     /// Updates all fields for a single to-do item.
